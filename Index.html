@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TLI Sales Rewards</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: #F4F7FB; color: #1A2B4A; }
+
+    /* ── Variables ── */
+    :root {
+      --navy:  #003087;
+      --blue:  #0066CC;
+      --lblue: #4A90D9;
+      --red:   #CC0000;
+      --gold:  #D4A017;
+      --gray:  #8A9BBE;
+      --light: #F4F7FB;
+      --white: #ffffff;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes barGrow { from { width: 0; } to { width: var(--w); } }
+
+    .fade-in { animation: fadeInUp .45s ease both; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--lblue); border-radius: 4px; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; top: 20px; right: 20px; z-index: 9999;
+      padding: 12px 20px; border-radius: 12px;
+      font-size: 14px; font-weight: 700; color: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,.25);
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s ease;
+    }
+    #toast.show { opacity: 1; }
+
+    /* ── Loader ── */
+    .loader {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 4px solid rgba(255,255,255,.2);
+      border-top-color: #fff;
+      animation: spin .8s linear infinite;
+      margin: 40px auto;
+    }
+
+    /* ══════════════ HEADER ══════════════ */
+    #header {
+      background: linear-gradient(135deg, var(--navy), var(--blue));
+      padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-logo {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 8px; padding: 4px 10px;
+      font-size: 13px; font-weight: 800; color: #fff;
+    }
+    .header-title { font-size: 15px; font-weight: 800; color: #fff; }
+    .header-sub   { font-size: 11px; color: rgba(255,255,255,.6); }
+    .header-nav   { display: flex; gap: 8px; }
+    .nav-btn {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px;
+      font-weight: 600; cursor: pointer; border: 1px solid transparent;
+      background: transparent; color: #fff;
+      transition: background .2s, border .2s;
+    }
+    .nav-btn.active {
+      background: rgba(255,255,255,.2);
+      border-color: rgba(255,255,255,.4);
+    }
+
+    /* ══════════════ MAIN ══════════════ */
+    #app { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* ══════════════ CARD ══════════════ */
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,48,135,.08);
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 15px; font-weight: 800;
+      color: #1A2B4A; margin-bottom: 16px;
+    }
+
+    /* ══════════════ PODIUM ══════════════ */
+    #podium-wrap {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px;
+      padding: 22px 12px 0;
+      margin-bottom: 18px;
+      display: flex; align-items: flex-end;
+      justify-content: center; gap: 8px;
+    }
+    .podium-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .podium-col.first { flex: 1.2; }
+    .medal { font-size: 26px; margin-bottom: 6px; }
+    .podium-name {
+      font-size: 12px; font-weight: 700; color: #fff;
+      text-align: center; max-width: 80px; line-height: 1.3;
+    }
+    .podium-team  { font-size: 11px; color: rgba(255,255,255,.5); }
+    .podium-pts   {
+      margin-top: 8px; padding: 6px 14px; border-radius: 20px;
+      font-size: 14px; font-weight: 800;
+    }
+    .podium-stand {
+      margin-top: 10px; width: 100%;
+      border-radius: 8px 8px 0 0;
+      border-bottom: none;
+    }
+
+    /* ══════════════ AVATAR ══════════════ */
+    .avatar {
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; color: #fff; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,48,135,.25);
+      position: relative;
+    }
+    .rank-badge {
+      position: absolute; bottom: -4px; right: -4px;
+      width: 18px; height: 18px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 800; color: #fff;
+      border: 2px solid #fff;
+    }
+
+    /* ══════════════ SEARCH ══════════════ */
+    #search-wrap { position: relative; margin-bottom: 18px; }
+    #search-wrap span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; }
+    #search-input {
+      width: 100%; padding: 13px 16px 13px 44px;
+      border-radius: 14px; border: 2px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.1);
+      backdrop-filter: blur(8px);
+      color: #fff; font-size: 14px;
+      font-family: 'Sarabun', sans-serif; outline: none;
+    }
+    #search-input::placeholder { color: rgba(255,255,255,.5); }
+
+    /* ══════════════ LEADERBOARD ROW ══════════════ */
+    .lb-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px; border-radius: 12px; margin-bottom: 8px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.1);
+      cursor: pointer;
+      transition: background .2s, transform .2s;
+    }
+    .lb-row:hover { background: rgba(255,255,255,.13); transform: translateX(4px); }
+    .lb-rank { width: 30px; text-align: center; font-weight: 800; color: rgba(255,255,255,.5); font-size: 14px; }
+    .lb-info { flex: 1; }
+    .lb-name { font-weight: 700; color: #fff; font-size: 13px; }
+    .lb-meta { font-size: 11px; color: rgba(255,255,255,.5); }
+    .lb-bar-wrap { height: 3px; border-radius: 3px; background: rgba(255,255,255,.15); margin-top: 5px; }
+    .lb-bar { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #4A90D9, #87CEEB); }
+    .lb-pts { text-align: right; }
+    .lb-pts-num { font-weight: 800; font-size: 18px; color: #fff; }
+    .lb-pts-label { font-size: 10px; color: rgba(255,255,255,.5); }
+
+    /* ══════════════ PROFILE PANEL ══════════════ */
+    #profile-panel {
+      display: none;
+      background: linear-gradient(160deg, #001F5C, #003087, #0055A5);
+      min-height: 100vh; padding: 20px 16px 60px;
+      position: fixed; inset: 0; overflow-y: auto; z-index: 200;
+    }
+    .back-btn {
+      background: rgba(255,255,255,.15); border: none; color: #fff;
+      border-radius: 10px; padding: 8px 16px; font-size: 13px;
+      font-weight: 600; cursor: pointer; margin-bottom: 18px;
+      font-family: 'Sarabun', sans-serif;
+    }
+    .profile-card {
+      background: rgba(255,255,255,.97);
+      border-radius: 20px; padding: 22px;
+      box-shadow: 0 8px 32px rgba(0,48,135,.3);
+      margin-bottom: 14px;
+    }
+    .profile-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .profile-name   { font-size: 20px; font-weight: 800; color: #1A2B4A; }
+    .profile-sub    { color: var(--gray); font-size: 13px; }
+    .profile-badge  {
+      display: inline-block; margin-top: 6px;
+      background: var(--light); border-radius: 10px; padding: 2px 10px;
+      font-size: 12px; color: var(--navy); font-weight: 700;
+    }
+    .pts-display {
+      background: linear-gradient(135deg, var(--navy), var(--blue));
+      border-radius: 16px; padding: 20px; text-align: center;
+      color: #fff; margin-bottom: 14px;
+    }
+    .pts-label { font-size: 13px; opacity: .7; }
+    .pts-big   { font-size: 48px; font-weight: 800; line-height: 1.1; }
+    .next-reward-label { font-size: 12px; color: var(--gray); margin-bottom: 6px; }
+    .progress-bar { height: 8px; border-radius: 8px; background: var(--light); }
+    .progress-fill {
+      height: 100%; border-radius: 8px;
+      background: linear-gradient(90deg, var(--blue), var(--lblue));
+      transition: width 1.2s ease;
+    }
+    .log-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 0; border-bottom: 1px solid #F0F4FA; font-size: 13px;
+    }
+    .log-icon {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .log-note  { font-weight: 600; color: #1A2B4A; }
+    .log-date  { font-size: 11px; color: var(--gray); }
+    .log-pts   { font-size: 16px; font-weight: 800; margin-left: auto; }
+
+    /* ══════════════ REWARDS PAGE ══════════════ */
+    .rewards-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    }
+    .reward-card {
+      background: #fff; border-radius: 16px; padding: 16px;
+      box-shadow: 0 4px 20px rgba(0,48,135,.1);
+      border: 2px solid transparent;
+      position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+      cursor: pointer;
+    }
+    .reward-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,48,135,.2); }
+    .reward-card.can-redeem { border-color: var(--blue); }
+    .can-badge {
+      position: absolute; top: 8px; right: 8px;
+      background: var(--blue); color: #fff;
+      font-size: 9px; font-weight: 700; padding: 2px 7px;
+      border-radius: 10px;
+    }
+    .reward-emoji { font-size: 42px; text-align: center; }
+    .reward-img   { width: 100%; height: 80px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; }
+    .reward-name  { font-weight: 700; font-size: 13px; color: #1A2B4A; text-align: center; line-height: 1.3; margin: 6px 0 3px; }
+    .reward-desc  { font-size: 11px; color: var(--gray); text-align: center; margin-bottom: 8px; }
+    .reward-prog-wrap { height: 4px; border-radius: 4px; background: #E8EDF5; margin-bottom: 6px; }
+    .reward-prog  { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--blue), var(--lblue)); }
+    .reward-pts   { text-align: center; font-size: 15px; font-weight: 800; color: var(--navy); margin-bottom: 10px; }
+    .redeem-btn {
+      width: 100%; padding: 8px; border-radius: 10px; border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      font-family: 'Sarabun', sans-serif;
+      transition: opacity .2s;
+    }
+    .redeem-btn.active { background: linear-gradient(135deg, var(--navy), var(--blue)); color: #fff; }
+    .redeem-btn.inactive { background: #E8EDF5; color: var(--gray); cursor: not-allowed; }
+    .reward-scroll-wrap { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; }
+    .reward-mini {
+      background: rgba(255,255,255,.9);
+      border-radius: 14px; padding: 14px;
+      min-width: 128px; text-align: center; flex-shrink: 0;
+    }
+    .reward-mini-emoji { font-size: 34px; }
+    .reward-mini-name  { font-size: 12px; font-weight: 700; color: #1A2B4A; margin-top: 4px; }
+    .reward-mini-pts   { font-size: 13px; font-weight: 800; color: var(--navy); margin-top: 4px; }
+
+    /* ══════════════ ADMIN ══════════════ */
+    #admin-wrap { display: none; }
+    #admin-header {
+      background: linear-gradient(135deg, var(--navy), var(--blue));
+      padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .admin-title { font-size: 15px; font-weight: 800; color: #fff; }
+    .admin-sub   { font-size: 12px; color: rgba(255,255,255,.7); }
+    .logout-btn  {
+      background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+      color: #fff; border-radius: 10px; padding: 6px 14px;
+      font-size: 12px; cursor: pointer; font-family: 'Sarabun', sans-serif;
+    }
+    #admin-tabs {
+      display: flex; overflow-x: auto; background: #fff;
+      border-bottom: 2px solid #E8EDF5; padding-left: 12px;
+    }
+    .admin-tab {
+      padding: 12px 14px; border: none; border-bottom: 3px solid transparent;
+      background: transparent; font-weight: 500; font-size: 13px;
+      cursor: pointer; white-space: nowrap;
+      font-family: 'Sarabun', sans-serif; color: var(--gray);
+      transition: color .2s;
+    }
+    .admin-tab.active { border-bottom-color: var(--navy); color: var(--navy); font-weight: 700; }
+    #admin-content { max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* ── Admin stat cards ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; margin-bottom: 18px; }
+    .stat-card {
+      background: #fff; border-radius: 16px; padding: 16px 18px;
+      box-shadow: 0 2px 12px rgba(0,48,135,.08);
+    }
+    .stat-icon  { font-size: 22px; }
+    .stat-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+    .stat-label { font-size: 12px; color: var(--gray); }
+
+    /* ── Forms ── */
+    .form-group { display: flex; flex-direction: column; gap: 10px; }
+    .form-row   { display: flex; gap: 10px; }
+    input, select, textarea {
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      border: 1.5px solid #D0DAF0; font-size: 13px;
+      font-family: 'Sarabun', sans-serif; color: #1A2B4A;
+      outline: none; background: #fff;
+      transition: border .2s;
+    }
+    input:focus, select:focus { border-color: var(--blue); }
+    .btn {
+      padding: 10px 20px; border-radius: 10px; border: none;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: 'Sarabun', sans-serif; transition: opacity .2s;
+    }
+    .btn:hover { opacity: .9; }
+    .btn-primary { background: linear-gradient(135deg, var(--navy), var(--blue)); color: #fff; }
+    .btn-danger  { background: #FFEBEE; color: #C62828; }
+    .btn-success { background: #E8F5E9; color: #2E7D32; }
+    .btn-full    { width: 100%; margin-top: 14px; padding: 13px; font-size: 14px; }
+
+    /* ── Member list row ── */
+    .member-row, .log-row-admin, .red-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #F0F4FA; font-size: 13px;
+    }
+    .member-name  { font-weight: 700; color: #1A2B4A; }
+    .member-meta  { font-size: 11px; color: var(--gray); }
+    .member-pts   { font-weight: 800; font-size: 15px; color: var(--navy); margin-left: auto; }
+
+    /* ── Status badge ── */
+    .status-badge {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+    }
+    .status-pending  { background: #FFF8E1; color: #F57F17; }
+    .status-approved { background: #E8F5E9; color: #2E7D32; }
+    .status-rejected { background: #FFEBEE; color: #C62828; }
+
+    /* ══════════════ LOGIN ══════════════ */
+    #login-wrap {
+      display: none;
+      min-height: 100vh;
+      background: linear-gradient(160deg, #001F5C, #003087, #0055A5);
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .login-box {
+      background: rgba(255,255,255,.97);
+      border-radius: 24px; padding: 36px;
+      width: 100%; max-width: 340px; text-align: center;
+      box-shadow: 0 24px 80px rgba(0,48,135,.4);
+    }
+    .login-icon {
+      width: 64px; height: 64px; margin: 0 auto 14px;
+      background: linear-gradient(135deg, var(--navy), var(--blue));
+      border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+    }
+    .login-title { font-size: 20px; font-weight: 800; color: #1A2B4A; }
+    .login-sub   { font-size: 13px; color: var(--gray); margin-bottom: 22px; }
+    #login-input {
+      padding: 12px 16px; border-radius: 12px;
+      border: 2px solid #D0DAF0; font-size: 14px;
+      text-align: center; margin-bottom: 12px;
+      transition: border .2s;
+    }
+    #login-input.error { border-color: var(--red); }
+    #login-error { color: var(--red); font-size: 13px; font-weight: 600; min-height: 20px; margin-bottom: 8px; }
+    .mode-switch {
+      position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+      padding: 10px 16px; border-radius: 20px; border: none;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      color: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.3);
+      font-family: 'Sarabun', sans-serif;
+    }
+
+    @media (max-width: 480px) {
+      .rewards-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+      .stat-grid    { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ SALES VIEW ═══ -->
+<div id="sales-wrap">
+  <div id="header">
+    <div class="header-brand">
+      <div class="header-logo">TLI</div>
+      <div>
+        <div class="header-title">ไทยประกันชีวิต</div>
+        <div class="header-sub">Sales Rewards Program</div>
+      </div>
+    </div>
+    <div class="header-nav">
+      <button class="nav-btn active" onclick="showSalesTab('home')">🏆 Leaderboard</button>
+      <button class="nav-btn"        onclick="showSalesTab('rewards')">🎁 รางวัล</button>
+    </div>
+  </div>
+
+  <div id="app">
+    <!-- HOME TAB -->
+    <div id="tab-home">
+      <div style="text-align:center;margin-bottom:8px">
+        <div style="font-size:22px;font-weight:800;color:#fff">🏆 อันดับยอดนักขาย</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.6)" id="month-label">กำลังโหลด...</div>
+      </div>
+      <div id="podium-wrap"><div class="loader"></div></div>
+      <div id="search-wrap">
+        <span>🔍</span>
+        <input id="search-input" type="text" placeholder="ค้นหาชื่อหรือรหัสพนักงานของคุณ..." oninput="filterLeaderboard()" />
+      </div>
+      <div id="leaderboard-list"></div>
+      <div style="margin-top:22px">
+        <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:12px">🎁 ของรางวัล</div>
+        <div class="reward-scroll-wrap" id="reward-mini-list"></div>
+      </div>
+    </div>
+
+    <!-- REWARDS TAB -->
+    <div id="tab-rewards" style="display:none">
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:22px;font-weight:800;color:#fff">🎁 ของรางวัลทั้งหมด</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.6)" id="user-pts-label">ค้นหาชื่อใน Leaderboard เพื่อดูคะแนนของคุณ</div>
+      </div>
+      <div class="rewards-grid" id="rewards-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ PROFILE PANEL ═══ -->
+<div id="profile-panel">
+  <div style="max-width:640px;margin:0 auto;padding-top:16px">
+    <button class="back-btn" onclick="closeProfile()">← กลับ</button>
+    <div class="profile-card" id="profile-card-content"></div>
+    <div class="card" id="profile-log-card"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ LOGIN ═══════════ -->
+<div id="login-wrap">
+  <div class="login-box">
+    <div class="login-icon">🔐</div>
+    <div class="login-title">Admin Login</div>
+    <div class="login-sub">ไทยประกันชีวิต • Sales Rewards</div>
+    <input id="login-input" type="password" placeholder="รหัสผ่าน Admin"
+      onkeydown="if(event.key==='Enter')doLogin()" />
+    <div id="login-error"></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ ADMIN ══════════ -->
+<div id="admin-wrap">
+  <div id="admin-header">
+    <div>
+      <div class="admin-title">🔧 Admin Dashboard</div>
+      <div class="admin-sub">ไทยประกันชีวิต • Sales Rewards</div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">ออกจากระบบ</button>
+  </div>
+  <div id="admin-tabs">
+    <button class="admin-tab active" onclick="showAdminTab('dashboard')">📊 ภาพรวม</button>
+    <button class="admin-tab" onclick="showAdminTab('points')">⭐ บันทึกคะแนน</button>
+    <button class="admin-tab" onclick="showAdminTab('members')">👥 สมาชิก</button>
+    <button class="admin-tab" onclick="showAdminTab('rewards-admin')">🎁 ของรางวัล</button>
+    <button class="admin-tab" id="tab-red-btn" onclick="showAdminTab('redemptions')">📋 คำขอ</button>
+  </div>
+  <div id="admin-content"></div>
+</div>
+
+<!-- Mode Switch -->
+<button class="mode-switch" id="mode-btn"
+  style="background:rgba(204,0,0,.9)"
+  onclick="toggleMode()">🔧 Admin</button>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
+let members = [], rewards = [], logs = [], redemptions = [];
+let selectedMember = null;
+let currentMode = 'sales'; // sales | login | admin
+let currentSalesTab = 'home';
+let currentAdminTab = 'dashboard';
+
+const AVATAR_COLORS = [
+  ['#003087','#4A90D9'], ['#CC0000','#E55A5A'],
+  ['#D4A017','#F0C040'], ['#1A7A4A','#3DBE7A'], ['#7B2D8B','#C060D0']
+];
+
+// ════════════════════════════════════════════════
+// API CALL → Google Apps Script
+// ════════════════════════════════════════════════
+function api(params) {
+  return new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(reject)
+      .doPost({ postData: { contents: JSON.stringify(params) } });
+  });
+}
+
+// ════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════
+async function init() {
+  try {
+    const [mRes, rRes] = await Promise.all([
+      api({ action: 'getMembers' }),
+      api({ action: 'getRewards' }),
+    ]);
+    members = mRes.data || [];
+    rewards = rRes.data || [];
+    renderLeaderboard();
+    renderRewardMini();
+    renderRewardsPage();
+  } catch (e) {
+    showToast('โหลดข้อมูลไม่สำเร็จ: ' + e, 'error');
+  }
+
+  // Set month label
+  const d = new Date();
+  const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const thYear = d.getFullYear() + 543;
+  document.getElementById('month-label').textContent =
+    'ประจำเดือน' + months[d.getMonth()] + ' ' + thYear;
+}
+
+window.onload = init;
+
+// ════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════
+function sorted() {
+  return [...members].sort((a,b) => Number(b.points) - Number(a.points));
+}
+
+function avatarColor(letter) {
+  const i = (letter || '').charCodeAt(0) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[i] || AVATAR_COLORS[0];
+}
+
+function avatarHTML(letter, size, rank) {
+  const [c1,c2] = avatarColor(letter);
+  const badge = rank
+    ? `<div class="rank-badge" style="background:${rank===1?'#D4A017':rank===2?'#9E9E9E':'#CD7F32'}">${rank}</div>`
+    : '';
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${size*.4}px;
+    background:linear-gradient(135deg,${c1},${c2})">${letter||'?'}${badge}</div>`;
+}
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'error' ? '#C62828' : '#2E7D32';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ════════════════════════════════════════════════
+// LEADERBOARD
+// ════════════════════════════════════════════════
+function renderLeaderboard() {
+  const s = sorted();
+  renderPodium(s);
+  renderList(s.slice(3));
+}
+
+function renderPodium(s) {
+  if (!s.length) { document.getElementById('podium-wrap').innerHTML = '<p style="color:#fff;padding:20px">ยังไม่มีข้อมูล</p>'; return; }
+  const order = [s[1], s[0], s[2]].filter(Boolean);
+  const ranks  = [2, 1, 3];
+  const medals = ['🥈','🥇','🥉'];
+  const colors = {
+    1: { bg:'linear-gradient(135deg,#D4A017,#F0C040)', border:'#D4A017', glow:'0 8px 28px rgba(212,160,23,.45)', textColor:'#fff' },
+    2: { bg:'linear-gradient(135deg,#8A9BBE,#C5D0E6)', border:'#8A9BBE', glow:'0 8px 28px rgba(138,155,190,.3)', textColor:'#1A2B4A' },
+    3: { bg:'linear-gradient(135deg,#CD7F32,#E8A050)', border:'#CD7F32', glow:'0 8px 28px rgba(205,127,50,.3)', textColor:'#fff' },
+  };
+  const heights = {1:120, 2:90, 3:80};
+  let html = '';
+  order.forEach((m,i) => {
+    const rank = ranks[i];
+    const c = colors[rank];
+    const isFirst = rank === 1;
+    const avSize  = isFirst ? 60 : 48;
+    html += `
+      <div class="podium-col ${isFirst?'first':''}" style="animation:fadeInUp .5s ease ${i*.15}s both">
+        <div class="medal">${medals[i]}</div>
+        ${avatarHTML(m.avatar||m.name?.[0]||'?', avSize)}
+        <div class="podium-name">${m.name}</div>
+        <div class="podium-team">${m.team||''}</div>
+        <div class="podium-pts" style="background:${c.bg};color:${c.textColor};box-shadow:${c.glow}">
+          ${Number(m.points).toLocaleString()} pts
+        </div>
+        <div class="podium-stand"
+          style="height:${heights[rank]}px;background:${c.bg};
+                 border:2px solid ${c.border};box-shadow:${c.glow}">
+        </div>
+      </div>`;
+  });
+  document.getElementById('podium-wrap').innerHTML = html;
+}
+
+function renderList(list) {
+  const s = sorted();
+  const top = s[0] ? Number(s[0].points) : 1;
+  const el  = document.getElementById('leaderboard-list');
+  if (!list.length) { el.innerHTML = ''; return; }
+  el.innerHTML = list.map((m, i) => {
+    const rank = s.findIndex(x => x.id === m.id) + 1;
+    const pct  = Math.round((Number(m.points) / top) * 100);
+    return `
+      <div class="lb-row fade-in" style="animation-delay:${i*.06}s" onclick="openProfile('${m.id}')">
+        <div class="lb-rank">#${rank}</div>
+        ${avatarHTML(m.avatar||m.name?.[0]||'?', 42)}
+        <div class="lb-info">
+          <div class="lb-name">${m.name}</div>
+          <div class="lb-meta">${m.team||''} • ${m.id}</div>
+          <div class="lb-bar-wrap"><div class="lb-bar" style="width:${pct}%"></div></div>
+        </div>
+        <div class="lb-pts">
+          <div class="lb-pts-num">${Number(m.points).toLocaleString()}</div>
+          <div class="lb-pts-label">คะแนน</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filterLeaderboard() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const s = sorted();
+  const list = q ? s.filter(m => m.name.toLowerCase().includes(q) || m.id.toLowerCase().includes(q)) : s.slice(3);
+  renderList(list);
+}
+
+// ════════════════════════════════════════════════
+// REWARD MINI (home preview)
+// ════════════════════════════════════════════════
+function renderRewardMini() {
+  document.getElementById('reward-mini-list').innerHTML = rewards.map(r => `
+    <div class="reward-mini" onclick="showSalesTab('rewards')">
+      ${r.imageUrl ? `<img src="${r.imageUrl}" class="reward-img">` : `<div class="reward-mini-emoji">${r.emoji||'🎁'}</div>`}
+      <div class="reward-mini-name">${r.name}</div>
+      <div class="reward-mini-pts">${Number(r.points).toLocaleString()} pts</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════
+// REWARDS PAGE
+// ════════════════════════════════════════════════
+function renderRewardsPage() {
+  const pts = selectedMember ? Number(selectedMember.points) : 0;
+  document.getElementById('user-pts-label').textContent = selectedMember
+    ? `คะแนนของคุณ: ${pts.toLocaleString()} pts`
+    : 'ค้นหาชื่อใน Leaderboard เพื่อดูคะแนนของคุณ';
+
+  document.getElementById('rewards-grid').innerHTML = rewards.map(r => {
+    const rPts    = Number(r.points);
+    const canRedeem = pts >= rPts;
+    const pct     = Math.min(Math.round((pts / rPts) * 100), 100);
+    return `
+      <div class="reward-card ${canRedeem?'can-redeem':''}">
+        ${canRedeem ? '<div class="can-badge">แลกได้!</div>' : ''}
+        ${r.imageUrl
+          ? `<img src="${r.imageUrl}" class="reward-img">`
+          : `<div class="reward-emoji">${r.emoji||'🎁'}</div>`}
+        <div class="reward-name">${r.name}</div>
+        <div class="reward-desc">${r.desc||''}</div>
+        <div class="reward-prog-wrap">
+          <div class="reward-prog" style="width:${pct}%"></div>
+        </div>
+        <div class="reward-pts">${rPts.toLocaleString()} <span style="font-size:11px;font-weight:400;color:var(--gray)">คะแนน</span></div>
+        <button class="redeem-btn ${canRedeem?'active':'inactive'}"
+          ${canRedeem?`onclick="requestRedeem('${r.id}','${r.name}','${r.emoji||'🎁'}',${rPts})"`:''}>
+          ${canRedeem ? 'แลกรางวัล' : `อีก ${(rPts-pts).toLocaleString()} pts`}
+        </button>
+      </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════
+// PROFILE
+// ════════════════════════════════════════════════
+async function openProfile(memberId) {
+  selectedMember = members.find(m => m.id === memberId);
+  if (!selectedMember) return;
+  const s   = sorted();
+  const rank = s.findIndex(m => m.id === memberId) + 1;
+  const pts  = Number(selectedMember.points);
+
+  // Next reward
+  const next = rewards.filter(r => Number(r.points) > pts).sort((a,b)=>Number(a.points)-Number(b.points))[0];
+  const nextHTML = next
+    ? `<div class="next-reward-label">อีก <strong>${(Number(next.points)-pts).toLocaleString()}</strong> คะแนน เพื่อแลก ${next.emoji||'🎁'} ${next.name}</div>
+       <div class="progress-bar"><div class="progress-fill" style="width:${Math.round(pts/Number(next.points)*100)}%"></div></div>`
+    : `<div style="text-align:center;color:var(--blue);font-weight:700">🎉 คุณสามารถแลกรางวัลทุกชิ้นได้แล้ว!</div>`;
+
+  document.getElementById('profile-card-content').innerHTML = `
+    <div class="profile-header">
+      ${avatarHTML(selectedMember.avatar||selectedMember.name?.[0]||'?', 64, rank)}
+      <div>
+        <div class="profile-name">${selectedMember.name}</div>
+        <div class="profile-sub">${selectedMember.id} • ${selectedMember.team||''}</div>
+        <span class="profile-badge">อันดับ #${rank}</span>
+      </div>
+    </div>
+    <div class="pts-display">
+      <div class="pts-label">คะแนนสะสมทั้งหมด</div>
+      <div class="pts-big">${pts.toLocaleString()}</div>
+      <div class="pts-label">คะแนน</div>
+    </div>
+    ${nextHTML}
+    <button class="btn btn-primary btn-full" onclick="showSalesTab('rewards')">🎁 ดูและแลกของรางวัล</button>`;
+
+  // Load logs
+  document.getElementById('profile-log-card').innerHTML = '<div class="card-title">ประวัติคะแนน</div><div class="loader" style="border-color:rgba(0,48,135,.15);border-top-color:var(--blue)"></div>';
+
+  document.getElementById('profile-panel').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const res = await api({ action: 'getPointsLog', memberId });
+    logs = res.data || [];
+    const logHTML = logs.length
+      ? logs.map(l => `
+          <div class="log-row">
+            <div class="log-icon" style="background:${Number(l.points)>0?'#E8F5E9':'#FFEBEE'}">
+              ${Number(l.points)>0?'⬆️':'⬇️'}
+            </div>
+            <div style="flex:1">
+              <div class="log-note">${l.note}</div>
+              <div class="log-date">${l.date}</div>
+            </div>
+            <div class="log-pts" style="color:${Number(l.points)>0?'#2E7D32':'#C62828'}">
+              ${Number(l.points)>0?'+':''}${l.points}
+            </div>
+          </div>`).join('')
+      : '<div style="text-align:center;color:var(--gray);padding:20px">ยังไม่มีประวัติ</div>';
+    document.getElementById('profile-log-card').innerHTML = `<div class="card-title">ประวัติคะแนน</div>${logHTML}`;
+  } catch(e) {
+    document.getElementById('profile-log-card').innerHTML = '<div style="color:red;padding:10px">โหลดประวัติไม่สำเร็จ</div>';
+  }
+
+  renderRewardsPage();
+}
+
+function closeProfile() {
+  document.getElementById('profile-panel').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ════════════════════════════════════════════════
+// REDEEM
+// ════════════════════════════════════════════════
+async function requestRedeem(rewardId, rewardName, rewardEmoji, rewardPoints) {
+  if (!selectedMember) { alert('กรุณาค้นหาชื่อของคุณก่อนแลกรางวัล'); return; }
+  if (!confirm(`ยืนยันการแลก "${rewardName}" ใช้ ${rewardPoints.toLocaleString()} คะแนน?`)) return;
+  try {
+    const res = await api({
+      action: 'requestRedemption',
+      memberId: selectedMember.id,
+      rewardId, rewardName, rewardEmoji, rewardPoints,
+    });
+    showToast(res.message || '✅ ส่งคำขอสำเร็จ');
+  } catch(e) { showToast('เกิดข้อผิดพลาด', 'error'); }
+}
+
+// ════════════════════════════════════════════════
+// TAB NAVIGATION (SALES)
+// ════════════════════════════════════════════════
+function showSalesTab(tab) {
+  currentSalesTab = tab;
+  ['home','rewards'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', (tab==='home'&&i===0)||(tab==='rewards'&&i===1));
+  });
+  if (tab === 'rewards') renderRewardsPage();
+  closeProfile();
+}
+
+// ════════════════════════════════════════════════
+// MODE SWITCH
+// ════════════════════════════════════════════════
+function toggleMode() {
+  if (currentMode === 'sales') showLogin();
+  else showSales();
+}
+
+function showSales() {
+  currentMode = 'sales';
+  document.getElementById('sales-wrap').style.display = 'block';
+  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('admin-wrap').style.display = 'none';
+  document.getElementById('login-wrap').style.flexDirection = '';
+  document.getElementById('mode-btn').textContent = '🔧 Admin';
+  document.getElementById('mode-btn').style.background = 'rgba(204,0,0,.9)';
+}
+
+function showLogin() {
+  currentMode = 'login';
+  document.getElementById('sales-wrap').style.display = 'none';
+  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('admin-wrap').style.display = 'none';
+  document.getElementById('mode-btn').textContent = '👤 พนักงาน';
+  document.getElementById('mode-btn').style.background = 'rgba(0,48,135,.9)';
+  document.getElementById('login-input').value = '';
+  document.getElementById('login-error').textContent = '';
+}
+
+async function doLogin() {
+  const pw = document.getElementById('login-input').value;
+  const inp = document.getElementById('login-input');
+  try {
+    const res = await api({ action: 'adminLogin', password: pw });
+    if (res.success) {
+      currentMode = 'admin';
+      document.getElementById('sales-wrap').style.display = 'none';
+      document.getElementById('login-wrap').style.display = 'none';
+      document.getElementById('admin-wrap').style.display = 'block';
+      document.getElementById('mode-btn').textContent = '👤 พนักงาน';
+      document.getElementById('mode-btn').style.background = 'rgba(0,48,135,.9)';
+      loadAdminData();
+    } else {
+      inp.classList.add('error');
+      document.getElementById('login-error').textContent = res.message || 'รหัสผ่านไม่ถูกต้อง';
+      setTimeout(() => inp.classList.remove('error'), 1500);
+    }
+  } catch(e) { showToast('เชื่อมต่อไม่ได้', 'error'); }
+}
+
+function doLogout() { showSales(); }
+
+// ════════════════════════════════════════════════
+// ADMIN DATA
+// ════════════════════════════════════════════════
+async function loadAdminData() {
+  try {
+    const [mRes, rRes, redRes, logRes] = await Promise.all([
+      api({ action: 'getMembers' }),
+      api({ action: 'getRewards' }),
+      api({ action: 'getAllRedemptions' }),
+      api({ action: 'getPointsLog' }),
+    ]);
+    members     = mRes.data  || [];
+    rewards     = rRes.data  || [];
+    redemptions = redRes.data || [];
+    logs        = logRes.data || [];
+    const pending = redemptions.filter(r => r.status === 'pending').length;
+    document.getElementById('tab-red-btn').textContent =
+      `📋 คำขอ${pending > 0 ? ` (${pending})` : ''}`;
+    renderAdminTab(currentAdminTab);
+  } catch(e) { showToast('โหลดข้อมูลไม่สำเร็จ', 'error'); }
+}
+
+// ════════════════════════════════════════════════
+// ADMIN TABS
+// ════════════════════════════════════════════════
+function showAdminTab(tab) {
+  currentAdminTab = tab;
+  document.querySelectorAll('.admin-tab').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  renderAdminTab(tab);
+}
+
+function renderAdminTab(tab) {
+  const s = sorted();
+  const totalPts = members.reduce((a,m) => a + Number(m.points), 0);
+  const pending  = redemptions.filter(r => r.status === 'pending');
+  const el = document.getElementById('admin-content');
+
+  if (tab === 'dashboard') {
+    el.innerHTML = `
+      <div class="stat-grid">
+        ${[
+          { icon:'👥', val: members.length, label:'สมาชิกทั้งหมด', color:'var(--navy)' },
+          { icon:'⭐', val: totalPts.toLocaleString(), label:'คะแนนรวมทั้งหมด', color:'#D4A017' },
+          { icon:'🎁', val: rewards.length+' รายการ', label:'ของรางวัล', color:'var(--blue)' },
+          { icon:'📋', val: pending.length+' คำขอ', label:'รออนุมัติ', color:'var(--red)' },
+        ].map(s => `
+          <div class="stat-card" style="border-left:4px solid ${s.color}">
+            <div class="stat-icon">${s.icon}</div>
+            <div class="stat-value" style="color:${s.color}">${s.val}</div>
+            <div class="stat-label">${s.label}</div>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">🏆 Top 5 อันดับนักขาย</div>
+        ${s.slice(0,5).map((m,i) => `
+          <div class="member-row">
+            <div style="width:28px;font-weight:800;color:${i<3?'#D4A017':'var(--gray)'}">
+              ${['🥇','🥈','🥉'][i]||'#'+(i+1)}
+            </div>
+            ${avatarHTML(m.avatar||m.name?.[0]||'?', 36)}
+            <div style="flex:1">
+              <div class="member-name">${m.name}</div>
+              <div class="member-meta">${m.team||''}</div>
+            </div>
+            <div class="member-pts">${Number(m.points).toLocaleString()}</div>
+          </div>`).join('')}
+      </div>`;
+
+  } else if (tab === 'points') {
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title">⭐ บันทึกคะแนน</div>
+        <div class="form-group">
+          <select id="pt-member">
+            <option value="">-- เลือกพนักงาน --</option>
+            ${s.map(m=>`<option value="${m.id}">${m.name} (${m.id}) — ${Number(m.points).toLocaleString()} pts</option>`).join('')}
+          </select>
+          <input id="pt-points" type="number" placeholder="คะแนน (ใส่ - เพื่อหักคะแนน)" />
+          <input id="pt-note" type="text" placeholder="หมายเหตุ (เช่น ปิดกรมธรรม์ 5 ฉบับ)" />
+          <button class="btn btn-primary" onclick="submitPoints()">บันทึกคะแนน</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">ประวัติล่าสุด</div>
+        ${logs.slice(0,10).map(l => {
+          const mem = members.find(m => m.id === l.memberId);
+          return `<div class="log-row-admin">
+            <span style="font-size:18px">${Number(l.points)>0?'⬆️':'⬇️'}</span>
+            <div style="flex:1">
+              <span style="font-weight:700">${mem?.name||l.memberId}</span>
+              <span style="color:var(--gray)"> • ${l.note}</span>
+              <div style="font-size:11px;color:var(--gray)">${l.date}</div>
+            </div>
+            <span style="font-weight:800;color:${Number(l.points)>0?'#2E7D32':'#C62828'}">
+              ${Number(l.points)>0?'+':''}${l.points}
+            </span>
+          </div>`;
+        }).join('') || '<div style="color:var(--gray);text-align:center;padding:16px">ยังไม่มีประวัติ</div>'}
+      </div>`;
+
+  } else if (tab === 'members') {
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title">➕ เพิ่มสมาชิกใหม่</div>
+        <div class="form-group">
+          <input id="nm-id"   type="text" placeholder="รหัสพนักงาน (เช่น TL011)" />
+          <input id="nm-name" type="text" placeholder="ชื่อ-นามสกุล" />
+          <input id="nm-team" type="text" placeholder="ทีม (เช่น ทีม A)" />
+          <button class="btn btn-primary" onclick="submitMember()">เพิ่มสมาชิก</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">รายชื่อสมาชิก (${members.length})</div>
+        ${s.map(m => `
+          <div class="member-row">
+            ${avatarHTML(m.avatar||m.name?.[0]||'?', 36)}
+            <div style="flex:1">
+              <div class="member-name">${m.name}</div>
+              <div class="member-meta">${m.id} • ${m.team||''}</div>
+            </div>
+            <div class="member-pts">${Number(m.points).toLocaleString()} pts</div>
+            <button class="btn btn-danger" style="padding:4px 10px;font-size:11px"
+              onclick="deleteMemberById('${m.id}')">ลบ</button>
+          </div>`).join('')}
+      </div>`;
+
+  } else if (tab === 'rewards-admin') {
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title">➕ เพิ่มของรางวัล</div>
+        <div class="form-group">
+          <div class="form-row">
+            <input id="rw-emoji" placeholder="Emoji" style="width:80px;flex-shrink:0" />
+            <input id="rw-name"  placeholder="ชื่อของรางวัล" />
+          </div>
+          <input id="rw-desc"     placeholder="คำอธิบายสั้น" />
+          <div class="form-row">
+            <input id="rw-points" type="number" placeholder="คะแนนที่ใช้" />
+            <input id="rw-stock"  type="number" placeholder="จำนวน" />
+          </div>
+          <input id="rw-img" placeholder="URL รูปจาก Google Drive (https://drive.google.com/uc?...)" />
+          <button class="btn btn-primary" onclick="submitReward()">เพิ่มของรางวัล</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+        ${rewards.map(r => `
+          <div class="card" style="padding:14px;text-align:center">
+            ${r.imageUrl ? `<img src="${r.imageUrl}" style="width:100%;height:70px;object-fit:cover;border-radius:8px;margin-bottom:6px">` : `<div style="font-size:34px">${r.emoji||'🎁'}</div>`}
+            <div style="font-weight:700;font-size:13px;color:#1A2B4A;margin-top:4px">${r.name}</div>
+            <div style="font-size:14px;font-weight:800;color:var(--navy);margin-top:4px">${Number(r.points).toLocaleString()} pts</div>
+            <div style="font-size:11px;color:var(--gray)">คงเหลือ ${r.stock}</div>
+            <button class="btn btn-danger" style="width:100%;margin-top:8px;padding:6px;font-size:11px"
+              onclick="deleteRewardById('${r.id}')">ลบ</button>
+          </div>`).join('')}
+      </div>`;
+
+  } else if (tab === 'redemptions') {
+    el.innerHTML = redemptions.length
+      ? redemptions.map(r => {
+          const mem = members.find(m => m.id === r.memberId);
+          const statusClass = {pending:'status-pending',approved:'status-approved',rejected:'status-rejected'}[r.status]||'';
+          const statusTxt   = {pending:'รออนุมัติ',approved:'อนุมัติแล้ว',rejected:'ปฏิเสธ'}[r.status]||r.status;
+          return `
+            <div class="card" style="border-left:4px solid ${r.status==='pending'?'#D4A017':r.status==='approved'?'#2E7D32':'#C62828'}">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <span style="font-size:28px">${r.rewardEmoji||'🎁'}</span>
+                <div style="flex:1">
+                  <div style="font-weight:700;font-size:13px">${r.rewardName}</div>
+                  <div style="font-size:12px;color:var(--gray)">${mem?.name||r.memberId} • ${r.date}</div>
+                </div>
+                <span class="status-badge ${statusClass}">${statusTxt}</span>
+              </div>
+              <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:${r.status==='pending'?10:0}px">
+                ${Number(r.rewardPoints).toLocaleString()} คะแนน
+              </div>
+              ${r.status==='pending' ? `
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-success" style="flex:1;padding:8px"
+                    onclick="approveRed('${r.id}')">✅ อนุมัติ</button>
+                  <button class="btn btn-danger" style="flex:1;padding:8px"
+                    onclick="rejectRed('${r.id}')">❌ ปฏิเสธ</button>
+                </div>` : ''}
+            </div>`;
+        }).join('')
+      : `<div class="card" style="text-align:center;padding:40px">
+           <div style="font-size:48px">📭</div>
+           <div style="margin-top:12px;font-weight:600;color:var(--gray)">ยังไม่มีคำขอแลกรางวัล</div>
+         </div>`;
+  }
+}
+
+// ════════════════════════════════════════════════
+// ADMIN ACTIONS
+// ════════════════════════════════════════════════
+async function submitPoints() {
+  const memberId = document.getElementById('pt-member').value;
+  const points   = document.getElementById('pt-points').value;
+  const note     = document.getElementById('pt-note').value;
+  if (!memberId || !points) { showToast('กรุณากรอกข้อมูลให้ครบ','error'); return; }
+  try {
+    const res = await api({ action:'addPoints', memberId, points:parseInt(points), note });
+    showToast(res.message || '✅ บันทึกสำเร็จ');
+    if (res.success) await loadAdminData();
+  } catch(e) { showToast('เกิดข้อผิดพลาด','error'); }
+}
+
+async function submitMember() {
+  const id   = document.getElementById('nm-id').value.trim();
+  const name = document.getElementById('nm-name').value.trim();
+  const team = document.getElementById('nm-team').value.trim();
+  if (!id || !name) { showToast('กรุณากรอกรหัสและชื่อ','error'); return; }
+  try {
+    const res = await api({ action:'addMember', id, name, team });
+    showToast(res.message || '✅ เพิ่มสมาชิกสำเร็จ', res.success?'success':'error');
+    if (res.success) await loadAdminData();
+  } catch(e) { showToast('เกิดข้อผิดพลาด','error'); }
+}
+
+async function deleteMemberById(id) {
+  if (!confirm('ลบสมาชิกนี้?')) return;
+  try {
+    const res = await api({ action:'deleteMember', memberId:id });
+    showToast(res.success ? '✅ ลบสำเร็จ' : res.message, res.success?'success':'error');
+    if (res.success) await loadAdminData();
+  } catch(e) { showToast('เกิดข้อผิดพลาด','error'); }
+}
+
+async function submitReward() {
+  const name   = document.getElementById('rw-name').value.trim();
+  const points = document.getElementById('rw-points').value;
+  const stock  = document.getElementById('rw-stock').value;
+  const emoji  = document.getElementById('rw-emoji').value.trim() || '🎁';
+  const desc   = document.getElementById('rw-desc').value.trim();
+  const imgUrl = document.getElementById('rw-img').value.trim();
+  if (!name || !points) { showToast('กรุณากรอกชื่อและคะแนน','error'); return; }
+  try {
+    const res = await api({ action:'addReward', name, points:parseInt(points), stock:parseInt(stock)||10, emoji, desc, imageUrl:imgUrl });
+    showToast(res.message || '✅ เพิ่มสำเร็จ');
+    if (res.success) await loadAdminData();
+  } catch(e) { showToast('เกิดข้อผิดพลาด','error'); }
+}
+
+async function deleteRewardById(id) {
+  if (!confirm('ลบของรางวัลนี้?')) return;
+  try {
+    const res = await api({ action:'deleteReward', rewardId:id });
+    showToast(res.success ? '✅ ลบสำเร็จ' : res.message, res.success?'success':'error');
+    if (res.success) await loadAdminData();
+  } catch(e) { showToast('เกิดข้อผิดพลาด','error'); }
+}
+
+async function approveRed(id) {
+  if (!confirm('อนุมัติคำขอนี้?')) return;
+  try {
+    const res = await api({ action:'approveRedemption', redemptionId:id });
+    showToast(res.message || '✅ อนุมัติสำเร็จ', res.success?'success':'error');
+    if (res.success) await loadAdminData();
+  } catch(e) { showToast('เกิดข้อผิดพลาด','error'); }
+}
+
+async function rejectRed(id) {
+  if (!confirm('ปฏิเสธคำขอนี้?')) return;
+  try {
+    const res = await api({ action:'rejectRedemption', redemptionId:id });
+    showToast(res.message || 'ปฏิเสธแล้ว', res.success?'success':'error');
+    if (res.success) await loadAdminData();
+  } catch(e) { showToast('เกิดข้อผิดพลาด','error'); }
+}
+</script>
+</body>
+</html>
