@@ -7,7 +7,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Sarabun', sans-serif; background: #F4F7FB; color: #1A2B4A; }
+    body { font-family: 'Sarabun', sans-serif; background: #001F5C; color: #1A2B4A; }
+    #sales-wrap { background: linear-gradient(160deg, #001F5C 0%, #003087 40%, #0055A5 100%); min-height: 100vh; }
 
     /* ── Variables ── */
     :root {
@@ -85,7 +86,7 @@
     }
 
     /* ══════════════ MAIN ══════════════ */
-    #app { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; }
+    #app { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; background: transparent; }
 
     /* ══════════════ CARD ══════════════ */
     .card {
@@ -183,8 +184,7 @@
       background: linear-gradient(160deg, #001F5C, #003087, #0055A5);
       min-height: 100vh; padding: 20px 16px 60px;
       position: fixed; inset: 0; overflow-y: auto; z-index: 200;
-    }
-    .back-btn {
+    }    .back-btn {
       background: rgba(255,255,255,.15); border: none; color: #fff;
       border-radius: 10px; padding: 8px 16px; font-size: 13px;
       font-weight: 600; cursor: pointer; margin-bottom: 18px;
@@ -361,6 +361,7 @@
       align-items: center; justify-content: center;
       padding: 20px;
     }
+    #login-wrap.show { display: flex; }
     .login-box {
       background: rgba(255,255,255,.97);
       border-radius: 24px; padding: 36px;
@@ -406,12 +407,12 @@
     <div class="header-brand">
       <div class="header-logo">TLI</div>
       <div>
-        <div class="header-title">ไทยประกันชีวิต</div>
-        <div class="header-sub">Sales Rewards Program</div>
+        <div class="header-title">ฝ่ายขยายงานภูมิภาค 4</div>
+        <div class="header-sub">ฝ่ายฯ4</div>
       </div>
     </div>
     <div class="header-nav">
-      <button class="nav-btn active" onclick="showSalesTab('home')">🏆 Leaderboard</button>
+      <button class="nav-btn active" onclick="showSalesTab('home')">🏆 กระดานคะแนน</button>
       <button class="nav-btn"        onclick="showSalesTab('rewards')">🎁 รางวัล</button>
     </div>
   </div>
@@ -420,13 +421,13 @@
     <!-- HOME TAB -->
     <div id="tab-home">
       <div style="text-align:center;margin-bottom:8px">
-        <div style="font-size:22px;font-weight:800;color:#fff">🏆 อันดับยอดนักขาย</div>
+        <div style="font-size:22px;font-weight:800;color:#fff">🏆 อันดับยอดการติตตั้ง</div>
         <div style="font-size:13px;color:rgba(255,255,255,.6)" id="month-label">กำลังโหลด...</div>
       </div>
       <div id="podium-wrap"><div class="loader"></div></div>
       <div id="search-wrap">
         <span>🔍</span>
-        <input id="search-input" type="text" placeholder="ค้นหาชื่อหรือรหัสพนักงานของคุณ..." oninput="filterLeaderboard()" />
+        <input id="search-input" type="text" placeholder="ค้นหาชื่อหรือรหัสประจำตัวของคุณ..." oninput="filterLeaderboard()" />
       </div>
       <div id="leaderboard-list"></div>
       <div style="margin-top:22px">
@@ -460,7 +461,7 @@
   <div class="login-box">
     <div class="login-icon">🔐</div>
     <div class="login-title">Admin Login</div>
-    <div class="login-sub">ไทยประกันชีวิต • Sales Rewards</div>
+    <div class="login-sub">ไทยประกันชีวิต • ฝ่ายขยายงานถูมิภาค 4</div>
     <input id="login-input" type="password" placeholder="รหัสผ่าน Admin"
       onkeydown="if(event.key==='Enter')doLogin()" />
     <div id="login-error"></div>
@@ -473,7 +474,7 @@
   <div id="admin-header">
     <div>
       <div class="admin-title">🔧 Admin Dashboard</div>
-      <div class="admin-sub">ไทยประกันชีวิต • Sales Rewards</div>
+      <div class="admin-sub">ไทยประกันชีวิต • ฝ่ายขยายงานถูมิภาค 4</div>
     </div>
     <button class="logout-btn" onclick="doLogout()">ออกจากระบบ</button>
   </div>
@@ -674,7 +675,7 @@ function renderRewardsPage() {
   const pts = selectedMember ? Number(selectedMember.points) : 0;
   document.getElementById('user-pts-label').textContent = selectedMember
     ? `คะแนนของคุณ: ${pts.toLocaleString()} pts`
-    : 'ค้นหาชื่อใน Leaderboard เพื่อดูคะแนนของคุณ';
+    : 'ค้นหาชื่อใน กระดานคะแนน เพื่อดูคะแนนของคุณ';
 
   document.getElementById('rewards-grid').innerHTML = rewards.map(r => {
     const rPts    = Number(r.points);
@@ -813,9 +814,8 @@ function toggleMode() {
 function showSales() {
   currentMode = 'sales';
   document.getElementById('sales-wrap').style.display = 'block';
-  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('login-wrap').classList.remove('show');
   document.getElementById('admin-wrap').style.display = 'none';
-  document.getElementById('login-wrap').style.flexDirection = '';
   document.getElementById('mode-btn').textContent = '🔧 Admin';
   document.getElementById('mode-btn').style.background = 'rgba(204,0,0,.9)';
 }
@@ -823,7 +823,7 @@ function showSales() {
 function showLogin() {
   currentMode = 'login';
   document.getElementById('sales-wrap').style.display = 'none';
-  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('login-wrap').classList.add('show');
   document.getElementById('admin-wrap').style.display = 'none';
   document.getElementById('mode-btn').textContent = '👤 พนักงาน';
   document.getElementById('mode-btn').style.background = 'rgba(0,48,135,.9)';
@@ -839,7 +839,7 @@ async function doLogin() {
     if (res.success) {
       currentMode = 'admin';
       document.getElementById('sales-wrap').style.display = 'none';
-      document.getElementById('login-wrap').style.display = 'none';
+      document.getElementById('login-wrap').classList.remove('show');
       document.getElementById('admin-wrap').style.display = 'block';
       document.getElementById('mode-btn').textContent = '👤 พนักงาน';
       document.getElementById('mode-btn').style.background = 'rgba(0,48,135,.9)';
